@@ -13,32 +13,47 @@ from agent.config.db import Base, engine, get_db
 from agent.config.models import Level
 from agent.alerts import get_alerts, get_alert
 
+from agent.config.qdrant_client import init_collections
+
+from agent.log_monitor import LogMonitor, worker
+
 app = FastAPI(title="OpsAgent App", version="1.0", description="")
 
 Base.metadata.create_all(bind=engine)
 
-running = True
+queue = asyncio.Queue()
 
-
-async def log_monitor():
-    global running
-    print("Log monitor started")
-    while running:
-        print("checking logs...")
-        await asyncio.sleep(100)
+tasks = []
+stop_event = asyncio.Event()
 
 
 @app.on_event("startup")
 async def startup_event():
-    app.state.monitor_task = asyncio.create_task(log_monitor())
+    await init_collections()
+
+    monitor = LogMonitor(queue, stop_event)
+
+    t1 = asyncio.create_task(monitor.start())
+    t2 = asyncio.create_task(worker(queue, stop_event))
+
+    tasks.extend([t1, t2])
+
+    print("OpsAgent started.")
 
 
 @app.on_event("shutdown")
-async def shutdown_even():
-    global running
-    running = False
-    await app.state.monitor_task
-    print("Log monitor stopped")
+async def shutdown_event():
+    print("Stopping OpsAgent...")
+
+    stop_event.set()
+
+    for task in tasks:
+        task.cancel()
+
+    # wait for cleanup
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+    print("OpsAgent stopped gracefully.")
 
 
 @app.get("/")
@@ -81,6 +96,7 @@ class Question(BaseModel):
 
 @app.post("/ask")
 def ask_agent(message: Question):
+    # you can ask any question related to server health, logs, alerts etc.
     return f"quetsion asked is {message}"
 
 
