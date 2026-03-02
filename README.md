@@ -26,7 +26,6 @@ Goal-driven autonomous AI agent that monitors service health, diagnoses incident
 - Docker
 - Docker Compose
 - Slack Webhook
-- Nextjs (React)
 
 ## Get Started
 
