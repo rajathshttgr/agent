@@ -59,3 +59,19 @@ uvicorn agent.main:app --reload --port 9000
 ```bash
 cloudflared tunnel --url http://localhost:9000
 ```
+
+## Design Summary
+
+```
+START
+  ↓
+analyze_log (LLM)
+  ↓
+decision_router
+   ↙        ↓         ↘
+restart   slack    alerts
+   ↓         ↓         ↓
+store_incident_memory
+   ↓
+END
+```

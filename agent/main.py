@@ -21,22 +21,22 @@ app = FastAPI(title="OpsAgent App", version="1.0", description="")
 
 Base.metadata.create_all(bind=engine)
 
-queue = asyncio.Queue()
-
-tasks = []
-stop_event = asyncio.Event()
-
 
 @app.on_event("startup")
 async def startup_event():
+
+    app.state.queue = asyncio.Queue()
+    app.state.stop_event = asyncio.Event()
+    app.state.tasks = []
+
     await init_collections()
 
-    monitor = LogMonitor(queue, stop_event)
+    monitor = LogMonitor(app.state.queue, app.state.stop_event)
 
     t1 = asyncio.create_task(monitor.start())
-    t2 = asyncio.create_task(worker(queue, stop_event))
+    t2 = asyncio.create_task(worker(app.state.queue, app.state.stop_event))
 
-    tasks.extend([t1, t2])
+    app.state.tasks.extend([t1, t2])
 
     print("OpsAgent started.")
 
@@ -45,13 +45,13 @@ async def startup_event():
 async def shutdown_event():
     print("Stopping OpsAgent...")
 
-    stop_event.set()
+    app.state.stop_event.set()
 
-    for task in tasks:
+    for task in app.state.tasks:
         task.cancel()
 
     # wait for cleanup
-    await asyncio.gather(*tasks, return_exceptions=True)
+    await asyncio.gather(*app.state.tasks, return_exceptions=True)
 
     print("OpsAgent stopped gracefully.")
 

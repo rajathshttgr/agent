@@ -17,5 +17,5 @@ class AlertEntry(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
-    level = Column(Enum(Level), index=True)
+    level = Column(Enum(Level), default=Level.critical, index=True)
     message = Column(String, index=True)

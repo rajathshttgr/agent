@@ -1,10 +1,10 @@
 import hashlib
 import uuid
 
-from agent.config.openai_client import AsyncOpenAI as openai_client
+from agent.config.openai_client import client as openai_client
 from agent.config.qdrant_client import client as qdrant_client
 
-from .agent import ops_agent
+from .agent import graph
 
 COLLECTION_NAME = "critical_logs"
 EMBEDDING_MODEL = "text-embedding-3-small"
@@ -40,7 +40,7 @@ async def process_critical_event(event: str):
 
     point_id = str(uuid.uuid4())
 
-    qdrant_client.upsert(
+    await qdrant_client.upsert(
         collection_name=COLLECTION_NAME,
         points=[
             {
@@ -56,5 +56,5 @@ async def process_critical_event(event: str):
 
     print("Stored critical log in vector DB")
 
-    # Trigger Ops agent
-    await ops_agent(event)
+    print("Calling Ops Agent")
+    await graph.ainvoke({"log": event})

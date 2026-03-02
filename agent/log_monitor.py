@@ -2,8 +2,10 @@ import asyncio
 import os
 from .log_parser import LogParser
 from .critical_logs import process_critical_event
+from pathlib import Path
 
-LOG_FILE = "logs/app.log"
+BASE_DIR = Path(__file__).resolve().parent
+LOG_FILE = BASE_DIR / "logs" / "app.log"
 
 
 class LogMonitor:

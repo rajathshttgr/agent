@@ -7,6 +7,16 @@ load_dotenv()
 slack_url = os.getenv("SLACK_BOT_URL")
 
 
+def build_slack_message(summary: str) -> str:
+    return f"""🚨 *CRITICAL ALERT*
+
+    Service: Demo App
+    Issue: {summary}
+    Impact: External API calls failing
+
+    #ops-alert"""
+
+
 def send_slack_message(message: str):
     payload = {"text": message}
     headers = {"Content-Type": "application/json"}

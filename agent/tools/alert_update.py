@@ -3,12 +3,13 @@ from agent.config.models import Level
 from agent.alerts import create_alert
 
 
-def add_alert(level: Level, message: str):
+def add_alert(message: str, level: Level = Level.critical):
     """
     Internal function.
     """
     db = SessionLocal()
     try:
+        print("updating alert")
         return create_alert(db, level, message)
     finally:
         db.close()
